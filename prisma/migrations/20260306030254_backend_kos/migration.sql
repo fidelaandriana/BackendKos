@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE `book` ADD COLUMN `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3);
+
+-- AlterTable
+ALTER TABLE `review` ADD COLUMN `replay` VARCHAR(191) NULL;
