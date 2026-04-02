@@ -1,68 +1,39 @@
-import { Injectable, BadRequestException } from '@nestjs/common'
-import { PrismaService } from 'src/prisma/prisma.service'
-import { RegisterDto } from './dto/register.dto'
-import { LoginDto } from './dto/login.dto'
-import * as bcrypt from 'bcrypt'
-import { JwtService } from '@nestjs/jwt'
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
-
   constructor(
     private prisma: PrismaService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
   ) {}
 
-  async register(data: RegisterDto) {
-
-    const userExist = await this.prisma.user.findUnique({
-      where: { email: data.email }
-    })
-
-    if (userExist) {
-      throw new BadRequestException("Email sudah digunakan")
-    }
-
-    const hashedPassword = await bcrypt.hash(data.password, 10)
-
-    const user = await this.prisma.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        password: hashedPassword,
-        phone: data.phone,
-        role: data.role || 'SOCIETY'
-      }
-    })
-
-    return user
-  }
-
-  async login(data: LoginDto) {
-
+  async login(email: string, password: string) {
     const user = await this.prisma.user.findUnique({
-      where: { email: data.email }
-    })
+      where: { email },
+    });
 
     if (!user) {
-      throw new BadRequestException("User tidak ditemukan")
+      throw new UnauthorizedException('Email tidak ditemukan');
     }
 
-    const isPasswordValid = await bcrypt.compare(data.password, user.password)
+    const passwordValid = await bcrypt.compare(password, user.password);
 
-    if (!isPasswordValid) {
-      throw new BadRequestException("Password salah")
+    if (!passwordValid) {
+      throw new UnauthorizedException('Password salah');
     }
 
-    const token = this.jwtService.sign({
-      id: user.id,
-      role: user.role
-    })
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    };
 
     return {
-      user,
-      access_token: token
-    }
+      message: 'Anda berhsil login',
+      access_token: this.jwtService.sign(payload),
+    };
   }
-
 }

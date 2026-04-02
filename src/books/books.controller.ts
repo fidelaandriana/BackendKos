@@ -1,34 +1,60 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Req,
+  UseGuards,
+  Get,
+  Param,
+  Patch,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
-import { UpdateBookDto } from './dto/update-book.dto';
+import { UpdateBookStatusDto } from './dto/update-book.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guards';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorators';
+import { UserRole } from '@prisma/client';
 
-@Controller('books')
-export class BooksController {
-  constructor(private readonly booksService: BooksService) {}
+@Controller('book')
+export class BookController {
+  constructor(private bookService: BooksService) {}
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SOCIETY)
   @Post()
-  create(@Body() createBookDto: CreateBookDto) {
-    return this.booksService.create(createBookDto);
+  create(@Body() dto: CreateBookDto, @Req() req) {
+    return this.bookService.create(dto, req.user.id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.SOCIETY)
+  @Get('me')
+  getMyBooking(@Req() req) {
+    return this.bookService.findByUser(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
   @Get()
   findAll() {
-    return this.booksService.findAll();
+    return this.bookService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.booksService.findOne(+id);
-  }
-
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.OWNER)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBookDto: UpdateBookDto) {
-    return this.booksService.update(+id, updateBookDto);
+  updateStatus(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateBookStatusDto,
+  ) {
+    return this.bookService.updateStatus(id, dto.status);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.booksService.remove(+id);
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.bookService.findOne(id);
   }
 }

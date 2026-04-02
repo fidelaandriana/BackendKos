@@ -1,26 +1,77 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateBookDto } from './dto/create-book.dto';
-import { UpdateBookDto } from './dto/update-book.dto';
 
 @Injectable()
 export class BooksService {
-  create(createBookDto: CreateBookDto) {
-    return 'This action adds a new book';
+  constructor(private prisma: PrismaService) {}
+
+  async create(dto: CreateBookDto, userId: number) {
+    return this.prisma.book.create({
+      data: {
+        kos_id: dto.kos_id,
+        user_id: userId,
+        start_date: new Date(dto.start_date),
+        end_date: new Date(dto.end_date),
+        status: 'PENDING',
+      },
+    });
   }
 
-  findAll() {
-    return `This action returns all books`;
+  async findByUser(userId: number) {
+    return this.prisma.book.findMany({
+      where: {
+        user_id: userId,
+      },
+      include: {
+        kos: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} book`;
+  async findAll() {
+    return this.prisma.book.findMany({
+      include: {
+        user: true,
+        kos: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 
-  update(id: number, updateBookDto: UpdateBookDto) {
-    return `This action updates a #${id} book`;
+  async findOne(id: number) {
+    const book = await this.prisma.book.findUnique({
+      where: { id },
+      include: {
+        user: true,
+        kos: true,
+      },
+    });
+
+    if (!book) {
+      throw new NotFoundException('Booking tidak ditemukan');
+    }
+
+    return book;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} book`;
+  async updateStatus(id: number, status: string) {
+    const book = await this.prisma.book.findUnique({
+      where: { id },
+    });
+
+    if (!book) {
+      throw new NotFoundException('Booking tidak ditemukan');
+    }
+
+    return this.prisma.book.update({
+      where: { id },
+      data: { status },
+    });
   }
 }
