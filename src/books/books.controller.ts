@@ -18,7 +18,7 @@ import { Roles } from '../auth/decorators/roles.decorators';
 import { UserRole } from '@prisma/client';
 
 @Controller('book')
-export class BookController {
+export class BooksController {
   constructor(private bookService: BooksService) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)

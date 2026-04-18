@@ -16,7 +16,7 @@ import { Roles } from '../auth/decorators/roles.decorators';
 import { UserRole } from '@prisma/client';
 
 @Controller('kos-image')
-export class KosImageController {
+export class KostImageController {
   constructor(private kosImageService: KostImageService) {}
 
   @UseGuards(JwtAuthGuard, RolesGuard)

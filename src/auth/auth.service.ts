@@ -20,7 +20,6 @@ export class AuthService {
     }
 
     const passwordValid = await bcrypt.compare(password, user.password);
-
     if (!passwordValid) {
       throw new UnauthorizedException('Password salah');
     }
@@ -32,7 +31,7 @@ export class AuthService {
     };
 
     return {
-      message: 'Anda berhsil login',
+      message: 'Login berhasil',
       access_token: this.jwtService.sign(payload),
     };
   }
