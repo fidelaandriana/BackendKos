@@ -1,19 +1,15 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  Param,
-  Delete,
-  UseGuards,
-  ParseIntPipe,
-} from '@nestjs/common';
+import {Controller, Post, Body, Get, Param, Delete,UseGuards, 
+        ParseIntPipe, UseInterceptors, UploadedFile
+       } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { KostImageService } from './kost_image.service';
-import { CreateKostImageDto } from './dto/create-kost_image.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guards';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorators';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guards';
 import { UserRole } from '@prisma/client';
+import { Roles } from 'src/auth/decorators/roles.decorators';
+import { CreateKostImageDto } from './dto/create-kost_image.dto';
 
 @Controller('kos-image')
 export class KostImageController {
@@ -22,8 +18,23 @@ export class KostImageController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.OWNER)
   @Post()
-  create(@Body() dto: CreateKostImageDto) {
-    return this.kosImageService.create(dto);
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const uniqueName =
+            Date.now() + '-' + Math.round(Math.random() * 1e9);
+          callback(null, uniqueName + extname(file.originalname));
+        },
+      }),
+    }),
+  )
+  create(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() dto: CreateKostImageDto
+  ) {
+    return this.kosImageService.create(dto, file);
   }
 
   @Get('kos/:kosId')

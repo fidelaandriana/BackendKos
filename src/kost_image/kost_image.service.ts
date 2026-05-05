@@ -6,11 +6,15 @@ import { CreateKostImageDto } from './dto/create-kost_image.dto';
 export class KostImageService {
   constructor(private prisma: PrismaService) {}
 
-  async create(dto: CreateKostImageDto) {
+  async create(dto: CreateKostImageDto, file: Express.Multer.File) {
+    if (!file) {
+      throw new NotFoundException('File wajib diupload');
+    }
+
     return this.prisma.kosImage.create({
       data: {
-        kos_id: dto.kos_id,
-        file: dto.file,
+        kos_id: Number(dto.kos_id),
+        file: file.filename, // nama file hasil upload
       },
     });
   }
