@@ -1,14 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Req,
-  UseGuards,
-  Get,
-  Param,
-  Patch,
-  ParseIntPipe,
-} from '@nestjs/common';
+import {Controller, Post, Body, Req, UseGuards, Get, Param, Patch, ParseIntPipe} from '@nestjs/common';
 import { BooksService } from './books.service';
 import { CreateBookDto } from './dto/create-book.dto';
 import { UpdateBookStatusDto } from './dto/update-book.dto';
@@ -58,3 +48,4 @@ export class BooksController {
     return this.bookService.findOne(id);
   }
 }
+
